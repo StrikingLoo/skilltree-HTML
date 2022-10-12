@@ -8,14 +8,6 @@ html, body{
 	height: 90vh;
 	border: 0;
 }
-#panel {
-	z-index: 100;
-	position:absolute;
-	top:0;
-	left:0;
-	padding:16px;
-	border : 1px solid lightgrey;
-}
 #popin{
 	z-index: 200;
 	position:absolute;
@@ -47,9 +39,10 @@ html, body{
 6,7
 7,8</textarea><br>
 <button onclick="initializeNetwork();">Display!</button>
+<input type="button" value="Download image" onclick="document.getElementById('canvasImg').click();">
+<a id="canvasImg" download="filename"></a>
 <div id="popin"></div>
 <div id="skilltree"></div>
-<div id="panel">Points: <span id="wallet"></span></div>
 </div>
 Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePen </a>.
 <script>
@@ -120,9 +113,7 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 		return skillEdges;
 	}
 
-	function buildGraphDisplay(network, nodes, edges, wallet){
-		//update wallet display
-		document.getElementById("wallet").innerHTML = wallet;
+	function buildGraphDisplay(network, nodes, edges){
 
 		/* SUBTREE */
 		/* glitch subtree */
@@ -170,9 +161,6 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 				if (currNode.requiredSubtree.length > 0) {
 					// if missing nodes in path mark as locked
 					currNode.locked += "To unlock this skill, you're missing the following prerequisites: \n- " + currNode.requiredSubtree.map( n => n.label.replace("\n"," ")).join("\n- ") ;
-				}else if (nodes.get(nodeId).value > wallet) {
-					// if not enough credit mark as locked
-					currNode.locked += "You do not have enough skill points to purchase this skill at the moment. Current total:" + wallet +"\n";
 				}
 			}
 				
@@ -212,7 +200,6 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 	};
 	
 	let network = new vis.Network(container, data, options);
-	let wallet = 100;
 
 	/* ********************************************************************************* */
 	
@@ -223,41 +210,47 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 
 	/* EVENTS HANDLING */
 	network.once("stabilized", () => {
-		buildGraphDisplay(network, nodes, edges, 100);
+		buildGraphDisplay(network, nodes, edges);
 	});
 	
 	/**
-		on click, update graph nodes selected status, handle wallet
+		on click, update graph nodes selected status
 	**/
 	network.on("click", p => {
 		if (p.nodes.length) {
 			let currNode = nodes.get(p.nodes[0]);
 			if (currNode.locked == ""){
 				if (currNode.selected == true){
-					if (confirm("Refund for "+ currNode.refund +" :\n- " + currNode.label.replace("\n", "") + (currNode.selectedParents.length > 0 ? "\n- "+ currNode.selectedParents.map( n => n.label.replace("\n"," ")).join("\n- "):""))){
+					if (confirm("Unlearn skill :\n- " + currNode.label.replace("\n", "") + (currNode.selectedParents.length > 0 ? "\n- "+ currNode.selectedParents.map( n => n.label.replace("\n"," ")).join("\n- "):""))){
 						currNode.selectedParents.forEach( node => {
 							node.selected = false;
 							nodes.update(node);
 						});
 						currNode.selected = false;
-						wallet += currNode.refund;
 					}
 				} else {
-					if (confirm("Acquire skill:\n- " + currNode.label.replace("\n", "") +"\n Remaining points afterward: " + (wallet - currNode.value) +" skill points")){
+					if (confirm("Acquire skill:\n- " + currNode.label.replace("\n", ""))){
 						currNode.selected = true;
-						wallet -= currNode.value;
+						
 					}
 				}
 				nodes.update(currNode);
-				document.getElementById("wallet").innerHTML = wallet;
 			}else{
 				// No need to alert, those are displayed in tooltips
 				// alert(currNode.locked);
 			}
-			buildGraphDisplay(network, nodes, edges, wallet);
+			buildGraphDisplay(network, nodes, edges);
 		}
-	});}
+	});
+	
+	network.on("afterDrawing", function(ctx) {
+	  var dataURL = ctx.canvas.toDataURL();
+	  document.getElementById('canvasImg').href = dataURL;
+	})
+	}
 
 	initializeNetwork();
+
+
 
 </script>
