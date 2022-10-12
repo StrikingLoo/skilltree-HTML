@@ -31,37 +31,33 @@ html, body{
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+<div style="text-align: center;">
+<textarea id="skillsTextArea" style="width: 40%; height: 10em;">1,asd1
+2,asd2
+3,asd3
+4,asdasd4
+1,asd1
+2,asd2
+3,asd3
+4,asdasd4</textarea>
+<textarea id="edgesTextArea" style="width: 40%; height: 10em;">1,2
+2,3
+3,4
+5,6
+6,7
+7,8</textarea><br>
+<button onclick="initializeNetwork();">Display!</button>
 <div id="popin"></div>
 <div id="skilltree"></div>
 <div id="panel">Points: <span id="wallet"></span></div>
-
+</div>
 Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePen </a>.
-<script>(() => {
+<script>
+	
 	const lockedColor = "#ccc";
 	const unlockedColor = "#def";
 	const selectedColor = "#33F0C3";
-
-	/* DATASET */
-	let nodes = new vis.DataSet([
-		{ id: 1, value: 1, level: 3, label: "starting 1" },
-		{ id: 2, value: 1, level: 3, label: "starting 2" },
-		{ id: 3, value: 1, level: 3, label: "starting 3" },
-		{ id: 4, value: 1, level: 2, label: "intermediate 1" },
-		{ id: 5, value: 1, level: 2, label: "intermediate 2" },
-		{ id: 6, value: 1, level: 1, label: "final" },
-	].map(n => { return n}));
-	let edges = new vis.DataSet([
-		{ from: 1, to: 4, arrows: "to" },
-		{ from: 2, to: 4, arrows: "to" },
-		{ from: 3, to: 5, arrows: "to" },
-		{ from: 4, to: 6, arrows: "to" },
-		{ from: 5, to: 6, arrows: "to" },
-	]);
-	const container = document.getElementById("skilltree");
-	const data = {
-		nodes: nodes,
-		edges: edges
-	};
+	
 	const options = {
 		interaction: {
 			selectConnectedEdges: false
@@ -89,41 +85,44 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 		},
 		layout: {
 			hierarchical: {
-				direction: "DU"
+				direction: "UD"
 			}
 		}
 	};
-	let network = new vis.Network(container, data, options);
-	let wallet = 100;
 
-	/* ********************************************************************************* */
-	
-	/**
-		update all graph nodes with selectedParents and subTree Requirements
-		change visuals based on status (values / requirements / selected)
-	**/
-	const buildGraphDisplay = function() {
+	function obtainSkills(){
+		var textArea = document.getElementById('skillsTextArea');
+		var lines = textArea.value.split('\n');
+		var skills = [];
+
+		for (var j = 0; j < lines.length; j++) {
+			if(lines[j] != ''){
+				values = lines[j].split(',');
+				item = {id: j+1, value: 1, level: parseInt(values[0]), label: values[1]};
+			    skills.push(item);
+			}
+		}
+		return skills;
+	}
+
+	function obtainSkillEdges(){
+		var textArea = document.getElementById('edgesTextArea');
+		var lines = textArea.value.split('\n');
+		var skillEdges = [];
+
+		for (var j = 0; j < lines.length; j++) {
+			if(lines[j] != ''){
+				values = lines[j].split(',');
+				item = { from: parseInt(values[0]), to: parseInt(values[1]), arrows: "to" }
+			  	skillEdges.push(item);
+		  }
+		}
+		return skillEdges;
+	}
+
+	function buildGraphDisplay(network, nodes, edges, wallet){
 		//update wallet display
 		document.getElementById("wallet").innerHTML = wallet;
-
-
-		/* recursive subTree (classic) */
-		/*
-		const getRSubtree = nodeId => {
-			let childs = network.getConnectedNodes(nodeId, "from");
-			if (childs.length > 0) {
-				let subtree = childs;
-				for (let i = 0; i < childs.length; i++) {
-					let nodeChilds = getSubtree(childs[i]);
-					if (nodeChilds) {
-						subtree = subtree.concat(nodeChilds);
-					}
-				}
-				return subtree;
-			}
-			return false;
-		};
-		*/
 
 		/* SUBTREE */
 		/* glitch subtree */
@@ -187,10 +186,7 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 			currNode.shapeProperties = (currNode.locked === "") ? { borderDashes : false} : { borderDashes : [6,4] } ;
 			currNode.refund = Math.round(currNode.selectedParents.reduce( (parentsRefund, node) => parentsRefund + node.value, currNode.value )*0.9);
 			currNode.title = (currNode.selected === true)?  currNode.label +" Refund the acquired skill for "+ currNode.refund +" points" :(currNode.locked === "")? "Acquire "+ currNode.label +" for "+currNode.value +" points" : currNode.locked.replace(/\n/g,"<br/>");
-			/*
-			currNode.borderWidth = (currNode.selected == true)?2:1;
-			currNode.borderWidthSelected = (currNode.selected == true)?2:1;
-			*/
+
 			nodes.update(currNode);
 
 			const connectedEdges = network.getConnectedEdges(currNode.id);
@@ -203,14 +199,31 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 			});
 			
 		});
+	}
+
+	function initializeNetwork(){
+
+	let nodes = new vis.DataSet(obtainSkills()); 
+	let edges = new vis.DataSet(obtainSkillEdges());
+	const container = document.getElementById("skilltree");
+	const data = {
+		nodes: nodes,
+		edges: edges
 	};
+	
+	let network = new vis.Network(container, data, options);
+	let wallet = 100;
+
+	/* ********************************************************************************* */
+	
+	/**
+		update all graph nodes with selectedParents and subTree Requirements
+		change visuals based on status (values / requirements / selected)
+	**/
 
 	/* EVENTS HANDLING */
-	/**
-		init
-	**/
 	network.once("stabilized", () => {
-		buildGraphDisplay();
+		buildGraphDisplay(network, nodes, edges, 100);
 	});
 	
 	/**
@@ -221,7 +234,7 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 			let currNode = nodes.get(p.nodes[0]);
 			if (currNode.locked == ""){
 				if (currNode.selected == true){
-					if (confirm("Refund "+ currNode.refund +" crédits (-10%) pour les compétences :\n- " + currNode.label.replace("\n", "") + (currNode.selectedParents.length > 0 ? "\n- "+ currNode.selectedParents.map( n => n.label.replace("\n"," ")).join("\n- "):""))){
+					if (confirm("Refund for "+ currNode.refund +" :\n- " + currNode.label.replace("\n", "") + (currNode.selectedParents.length > 0 ? "\n- "+ currNode.selectedParents.map( n => n.label.replace("\n"," ")).join("\n- "):""))){
 						currNode.selectedParents.forEach( node => {
 							node.selected = false;
 							nodes.update(node);
@@ -229,7 +242,7 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 						currNode.selected = false;
 						wallet += currNode.refund;
 					}
-				}else{
+				} else {
 					if (confirm("Acquire skill:\n- " + currNode.label.replace("\n", "") +"\n Remaining points afterward: " + (wallet - currNode.value) +" skill points")){
 						currNode.selected = true;
 						wallet -= currNode.value;
@@ -241,8 +254,10 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 				// No need to alert, those are displayed in tooltips
 				// alert(currNode.locked);
 			}
-			buildGraphDisplay();
+			buildGraphDisplay(network, nodes, edges, wallet);
 		}
-	});
-})();
+	});}
+
+	initializeNetwork();
+
 </script>
