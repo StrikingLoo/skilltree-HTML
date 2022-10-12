@@ -20,30 +20,37 @@ html, body{
 #popin:empty{
 	display:none;
 }
+.wrapper {display: grid;
+grid-template-columns: 1fr 1fr;
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
-<div style="text-align: center;">
-<textarea id="skillsTextArea" style="width: 40%; height: 10em;">1,asd1
-2,asd2
-3,asd3
-4,asdasd4
-1,asd1
-2,asd2
-3,asd3
-4,asdasd4</textarea>
-<textarea id="edgesTextArea" style="width: 40%; height: 10em;">1,2
+<div class="wrapper" style="text-align: center;">
+	<h3> Skills </h3> <h3>Dependencies</h3>
+	<span></span><span>format ("a,b" : b depends on a)</span>
+<textarea id="skillsTextArea" style="height: 10em;">1,skill A1
+2,skill A2
+3,skill A3
+4,skill A4
+1,skill B1
+2,skill B2
+3,skill B3
+4,skill B4</textarea>
+<textarea id="edgesTextArea" style="height: 10em;">1,2
 2,3
 3,4
 5,6
 6,7
 7,8</textarea><br>
+</div>
+<div style="text-align: center;">
 <button onclick="initializeNetwork();">Display!</button>
 <input type="button" value="Download image" onclick="document.getElementById('canvasImg').click();">
-<a id="canvasImg" download="filename"></a>
+<a id="canvasImg" download="filename"></a> </div>
 <div id="popin"></div>
 <div id="skilltree"></div>
-</div>
+
 Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePen </a>.
 <script>
 	
@@ -242,7 +249,7 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 			buildGraphDisplay(network, nodes, edges);
 		}
 	});
-	
+
 	network.on("afterDrawing", function(ctx) {
 	  var dataURL = ctx.canvas.toDataURL();
 	  document.getElementById('canvasImg').href = dataURL;
