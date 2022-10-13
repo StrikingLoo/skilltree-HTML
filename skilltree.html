@@ -1,24 +1,11 @@
 <style>
-html, body{
-	padding:0;
-	margin:0;
-}
+	body {
+		padding: 3em;
+		width:  70%;
+	}
 #skilltree {
-	width: 90vw;
 	height: 90vh;
-	border: 0;
-}
-#popin{
-	z-index: 200;
-	position:absolute;
-	left:50%;
-	top:50%;
-	transform:translate(-50% -50%);
-	border:1px solid #ccc;
-	padding:16px;
-}
-#popin:empty{
-	display:none;
+	border: 1px solid #000;
 }
 .wrapper {display: grid;
 grid-template-columns: 1fr 1fr;
@@ -26,9 +13,10 @@ grid-template-columns: 1fr 1fr;
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+<h1>Create a Custom Skill Tree</h1>
 <div class="wrapper" style="text-align: center;">
 	<h3> Skills </h3> <h3>Dependencies</h3>
-	<span></span><span>format ("a,b" : b depends on a)</span>
+	<span><i>format: depth in skilltree, name</i></span><span><i>format: ("a,b" : b depends on a)</i></span>
 <textarea id="skillsTextArea" style="height: 10em;">1,skill A1
 2,skill A2
 3,skill A3
@@ -47,11 +35,12 @@ grid-template-columns: 1fr 1fr;
 <div style="text-align: center;">
 <button onclick="initializeNetwork();">Display!</button>
 <input type="button" value="Download image" onclick="document.getElementById('canvasImg').click();">
-<a id="canvasImg" download="filename"></a> </div>
-<div id="popin"></div>
+<a id="canvasImg" download="skill-tree.png"></a> </div>
 <div id="skilltree"></div>
 
-Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePen </a>.
+<p>This app lets you design custom skill trees. Track your progress in a career or course, divide a field into categories, or do whatever you like.</p>
+<p>If you found this useful or have any feedback, <a href="mailto:lucianostrika44@gmail.com">contact me or send me your skill trees</a>. This site will not collect any data you use to make the trees or put into the trees. Everything runs on the front end.</p>
+<p>Initial code inspired from <a href="https://codepen.io/poppan/pen/RexWgX">CodePen</a>.</p>
 <script>
 	
 	const lockedColor = "#ccc";
@@ -236,10 +225,7 @@ Initial code sourced from <a href="https://codepen.io/poppan/pen/RexWgX"> CodePe
 						currNode.selected = false;
 					}
 				} else {
-					if (confirm("Acquire skill:\n- " + currNode.label.replace("\n", ""))){
-						currNode.selected = true;
-						
-					}
+					currNode.selected = true;
 				}
 				nodes.update(currNode);
 			}else{
