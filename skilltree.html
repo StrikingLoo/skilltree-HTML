@@ -1,8 +1,4 @@
 <style>
-	body {
-		padding: 3em;
-		width:  70%;
-	}
 #skilltree {
 	height: 90vh;
 	border: 1px solid #000;
@@ -16,21 +12,17 @@ grid-template-columns: 1fr 1fr;
 <h1>Create a Custom Skill Tree</h1>
 <div class="wrapper" style="text-align: center;">
 	<h3> Skills </h3> <h3>Dependencies</h3>
-	<span><i>format: depth in skilltree, name</i></span><span><i>format: ("a,b" : b depends on a)</i></span>
-<textarea id="skillsTextArea" style="height: 10em;">1,skill A1
-2,skill A2
-3,skill A3
-4,skill A4
-1,skill B1
-2,skill B2
-3,skill B3
-4,skill B4</textarea>
-<textarea id="edgesTextArea" style="height: 10em;">1,2
-2,3
-3,4
-5,6
-6,7
-7,8</textarea><br>
+	<span><i>format: depth in skilltree, name.<br> Alternative format:<br>depth {skillName1,skillName2}</i></span><span><i>format: ("a,b" : b depends on a)<br>"{a,b} {c,d}" or "b {c,d}"</i></span>
+<textarea id="skillsTextArea" style="height: 10em;">
+1 {skill A1, skill B1}
+2 {skill A2, skill B2}
+3 {skill A3, skill B3}
+4,extra
+</textarea>
+<textarea id="edgesTextArea" style="height: 10em;">
+{1,2} {3,4}
+6 {7,5}
+5,7</textarea><br>
 </div>
 <div style="text-align: center;">
 <button onclick="initializeNetwork();">Display!</button>
@@ -40,7 +32,7 @@ grid-template-columns: 1fr 1fr;
 
 <p>This app lets you design custom skill trees. Track your progress in a career or course, divide a field into categories, or do whatever you like.</p>
 <p>If you found this useful or have any feedback, <a href="mailto:lucianostrika44@gmail.com">contact me or send me your skill trees</a>. This site will not collect any data you use to make the trees or put into the trees. Everything runs on the front end.</p>
-<p>Initial code inspired from <a href="https://codepen.io/poppan/pen/RexWgX">CodePen</a>.</p>
+<p>Code available on <a href="https://github.com/StrikingLoo/skilltree-HTML">Github</a>. Initial code inspired from this <a href="https://codepen.io/poppan/pen/RexWgX">CodePen</a>.</p>
 <script>
 	
 	const lockedColor = "#ccc";
@@ -83,12 +75,26 @@ grid-template-columns: 1fr 1fr;
 		var textArea = document.getElementById('skillsTextArea');
 		var lines = textArea.value.split('\n');
 		var skills = [];
-
+		var skillId = 0
 		for (var j = 0; j < lines.length; j++) {
 			if(lines[j] != ''){
-				values = lines[j].split(',');
-				item = {id: j+1, value: 1, level: parseInt(values[0]), label: values[1]};
-			    skills.push(item);
+				const regex = /\d \{.*\}\s*$/;
+				const matchFound = lines[j].match(regex);
+				if(matchFound){
+				    found = matchFound[0]
+				    skillLevel = parseInt(found.slice(0, found.indexOf(' ')))
+				    values = found.slice(found.indexOf('{')+1,found.indexOf('}')).split(',')
+				    for (var skillName of values){
+				    	skillId++;
+				    	item = {id: skillId, value: 1, level: skillLevel, label: skillName};
+				    	skills.push(item);
+				    }
+				} else {
+					skillId++;
+					values = lines[j].split(',');
+					item = {id: skillId, value: 1, level: parseInt(values[0]), label: values[1]};
+				    skills.push(item);
+				}
 			}
 		}
 		return skills;
@@ -101,10 +107,46 @@ grid-template-columns: 1fr 1fr;
 
 		for (var j = 0; j < lines.length; j++) {
 			if(lines[j] != ''){
-				values = lines[j].split(',');
-				item = { from: parseInt(values[0]), to: parseInt(values[1]), arrows: "to" }
-			  	skillEdges.push(item);
-		  }
+				input = lines[j]
+				var regex = /\d+ \{([0-9,]*)\}\s*$/;
+				var matchFound = input.match(regex);
+				if(matchFound){
+					found = matchFound[0]
+				    fromSkill = parseInt(found.slice(0, found.indexOf(' ')))
+				    values = found.slice(found.indexOf('{')+1,found.indexOf('}')).split(',')
+				    for (var toSkill of values){
+				    	item = {from: parseInt(fromSkill),
+				    			to: parseInt(toSkill),
+				    			arrows: "to" }
+				    	console.log(fromSkill+" "+toSkill);
+				    	skillEdges.push(item);
+				    }
+				} else {
+					regex = /\{([0-9,]*)\} \{([0-9,]*)\}\s*$/;
+					matchFound = input.match(regex)
+					if(matchFound){
+						console.log(matchFound)
+						found = matchFound[0]
+					    fromSkills = found.slice(0, found.indexOf(' '))
+					    toSkills = found.slice(found.indexOf(' '), found.length)
+					    valuesFrom = fromSkills.slice(fromSkills.indexOf('{')+1,fromSkills.indexOf('}')).split(',')
+					    valuesTo = toSkills.slice(toSkills.indexOf('{')+1,toSkills.indexOf('}')).split(',')
+					    console.log(valuesTo)
+					    console.log(valuesFrom)
+					    for (var toSkill of valuesTo){
+					    	for (var fromSkill of valuesFrom){
+					    	item = {from: parseInt(fromSkill),
+					    			to: parseInt(toSkill),
+					    			arrows: "to" }
+					    	skillEdges.push(item);
+					    	}
+						}
+				} else {
+					values = lines[j].split(',');
+					item = { from: parseInt(values[0]), to: parseInt(values[1]), arrows: "to" }
+				  	skillEdges.push(item);
+			  }
+		  } }
 		}
 		return skillEdges;
 	}
@@ -243,7 +285,4 @@ grid-template-columns: 1fr 1fr;
 	}
 
 	initializeNetwork();
-
-
-
 </script>
